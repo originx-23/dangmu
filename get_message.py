@@ -1,33 +1,34 @@
+import asyncio
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
+import nest_asyncio
 
+# 应用 nest_asyncio 以允许在运行的事件循环中使用嵌套事件循环
+nest_asyncio.apply()
 
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Hello! Send me a message and I will display it as a danmaku!')
+# 使用你的真实机器人 API Token
+bot_token = '7453177525:AAECDvPpdZTMzMhsEpXnNgYw94vWqiWlRz0'  # 请在此替换为正确的 Token
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text('Bot is running!')
 
-def echo(update: Update, context: CallbackContext) -> None:
-    # 将消息传递给弹幕显示模块
-    context.bot_data['messages'].append(update.message.text)
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(f"Echo: {update.message.text}")
+    print(f"Received message: {update.message.text}")
 
+async def main():
+    application = ApplicationBuilder().token(bot_token).build()
 
-def main() -> None:
-    # 你的 API Token
-    token = 'YOUR_API_TOKEN'
+    application.add_handler(CommandHandler('start', start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    updater = Updater(token)
-    dispatcher = updater.dispatcher
-
-    # 注册命令和消息处理器
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
-
-    # 初始化消息存储
-    dispatcher.bot_data['messages'] = []
-
-    updater.start_polling()
-    updater.idle()
-
+    await application.run_polling()
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
